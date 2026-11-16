@@ -9,10 +9,12 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    core/MorseConverter.cpp \
     main.cpp \
     ui/mainwindow.cpp
 
 HEADERS += \
+    core/MorseConverter.h \
     ui/mainwindow.h
 
 # Default rules for deployment.
