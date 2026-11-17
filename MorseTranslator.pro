@@ -10,11 +10,13 @@ CONFIG += c++11
 
 SOURCES += \
     core/MorseConverter.cpp \
+    core/MorseSeparator.cpp \
     main.cpp \
     ui/mainwindow.cpp
 
 HEADERS += \
     core/MorseConverter.h \
+    core/MorseSeparator.h \
     ui/mainwindow.h
 
 # Default rules for deployment.
