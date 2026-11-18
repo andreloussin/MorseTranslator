@@ -33,6 +33,7 @@ private:
     void updateDirectionLabels();
     void updateSeparatorComboPosition();
     void loadHistoryData();
+    void applyStyles();
 
     MorseConverter converter;
     TranslationDirection direction = TranslationDirection::FrenchToMorse;

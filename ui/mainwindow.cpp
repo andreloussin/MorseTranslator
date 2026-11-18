@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUi();
+    applyStyles();
     updateDirectionLabels();
     loadHistoryData();
 }
@@ -61,6 +62,7 @@ void MainWindow::setupUi() {
 
     // La barre de langue plus bouton switch (Style Google Translate), HBLay
     QFrame *langBar = new QFrame(this); // Le frame, c'est pour avoir la possibilite de de faire des box avec border
+    langBar->setObjectName("langBar");
     QHBoxLayout *langLayout = new QHBoxLayout(langBar);
     langLayout->setContentsMargins(16, 10, 16, 10);
 
@@ -68,7 +70,9 @@ void MainWindow::setupUi() {
     leftLangLabel->setAlignment(Qt::AlignCenter);
 
     switchBtn = new QPushButton("⇄", this);
+    switchBtn->setObjectName("switchBtn");
     switchBtn->setToolTip("Inverser le sens de traduction");
+    switchBtn->setFixedSize(44, 44);
     switchBtn->setCursor(Qt::PointingHandCursor);
 
     rightLangLabel = new QLabel(this);
@@ -87,6 +91,7 @@ void MainWindow::setupUi() {
 
     // Carte Gauche (Entrée)
     QFrame *leftCard = new QFrame();
+    leftCard->setObjectName("cardFrame");
     leftCard->setMaximumHeight(210);
     leftCard->setMinimumWidth(240);
     // il a aussi besoin d elayout car il y a des boutons en bas
@@ -107,6 +112,7 @@ void MainWindow::setupUi() {
 
     // Carte Droite (Résultat)
     QFrame *rightCard = new QFrame();
+    rightCard->setObjectName("cardFrame");
     rightCard->setMaximumHeight(210);
     rightCard->setMinimumWidth(240);
     QVBoxLayout *rightCardLayout = new QVBoxLayout(rightCard);
@@ -121,6 +127,7 @@ void MainWindow::setupUi() {
     copyBtn->setCursor(Qt::PointingHandCursor);
 
     saveBtn = new QPushButton("Sauvegarder dans l'historique", this);
+    saveBtn->setObjectName("saveBtn");
     saveBtn->setCursor(Qt::PointingHandCursor);
 
     rightFooter->addStretch();
@@ -146,6 +153,7 @@ void MainWindow::setupUi() {
 
     // On initialise la table de l'historique
     QFrame *historySection = new QFrame();
+    historySection->setObjectName("cardFrame");
     QVBoxLayout *historyLayout = new QVBoxLayout(historySection);
     historyLayout->setContentsMargins(16, 14, 16, 14);
     historyLayout->setSpacing(10);
@@ -169,7 +177,7 @@ void MainWindow::setupUi() {
     historyTable->verticalHeader()->setVisible(false);
     historyTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     historyTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    historyTable->setAlternatingRowColors(true);
+    historyTable->setAlternatingRowColors(false);
 
     historyLayout->addLayout(historyHeader);
     historyLayout->addWidget(historyTable);
@@ -284,6 +292,190 @@ void MainWindow::onHistoryItemDoubleClicked(int row, int /*column*/) {
 
     updateDirectionLabels();
     sourceEdit->setPlainText(source);
+}
+
+void MainWindow::applyStyles() {
+    QString qss = R"(
+    /* --- Fond général de la fenêtre --- */
+    QMainWindow, QWidget#centralWidget {
+        background-color: #0b1329;
+        font-family: 'Segoe UI', -apple-system, sans-serif;
+        color: #f8fafc;
+    }
+
+    /* --- Titre principal --- */
+    QLabel#appTitle {
+        font-size: 24px;
+        font-weight: 700;
+        color: #38bdf8;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    /* --- Barre de sélection des langues --- */
+    QFrame#langBar {
+        background-color: #162032;
+        border: 1px solid #283548;
+        border-radius: 12px;
+    }
+    QFrame#langBar QLabel {
+        font-weight: 600;
+        font-size: 13px;
+        color: #94a3b8;
+        border: none;
+        background: transparent;
+    }
+
+    /* --- Bouton d'inversion central (Cercle parfait et stylisé) --- */
+    QPushButton#switchBtn {background-color: #1e293b;
+        border: 1px solid #38bdf8;
+        border-radius: 22px;
+        font-size: 22px;
+        color: #38bdf8;
+        padding: 0px;
+    }
+    QPushButton#switchBtn:hover {
+        background-color: #38bdf8;
+        color: #0b1329;
+        border-color: #38bdf8;
+    }
+
+    /* --- Les Cartes --- */
+    QFrame#cardFrame {
+        background-color: #162032;
+        border: 1px solid #283548;
+        border-radius: 14px;
+    }
+
+    /* --- Zones de texte --- */
+    QTextEdit {
+        background-color: transparent;
+        border: none;
+        font-size: 14px;
+        color: #f1f5f9;
+        selection-background-color: #0284c7;
+        selection-color: #ffffff;
+    }
+
+    /* --- Boutons secondaires --- */
+    QPushButton {
+        background-color: #22304a;
+        border: 1px solid #334460;
+        border-radius: 8px;
+        padding: 6px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #e2e8f0;
+    }
+    QPushButton:hover {
+        background-color: #334460;
+        border-color: #38bdf8;
+        color: #ffffff;
+    }
+    QPushButton:pressed {
+        background-color: #162032;
+    }
+
+    /* --- Bouton Principal : Sauvegarder --- */
+    QPushButton#saveBtn {
+        background-color: #0284c7;
+        color: #ffffff;
+        border: none;
+        font-weight: 700;
+    }
+    QPushButton#saveBtn:hover {
+        background-color: #0369a1;
+    }
+    QPushButton#saveBtn:pressed {
+        background-color: #075985;
+    }
+
+    /* --- ComboBox et son menu déroulant --- */
+    QComboBox {
+        background-color: #0b1329;
+        border: 1px solid #334460;
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 12px;
+        color: #e2e8f0;
+    }
+    QComboBox:hover {
+        border-color: #38bdf8;
+    }
+    QComboBox::drop-down {
+        subcontrol-origin: padding;
+        subcontrol-position: top right;
+        width: 24px;
+        border-left: none;
+    }
+    QComboBox QAbstractItemView {
+        background-color: #162032;
+        border: 1px solid #334460;
+        color: #f1f5f9;
+        selection-background-color: #0284c7;
+        selection-color: #ffffff;
+        outline: none;
+        padding: 4px;
+    }
+
+    /* --- Section Historique --- */
+    QLabel#sectionTitle {
+        font-size: 13px;
+        font-weight: 600;
+        color: #94a3b8;
+        border: none;
+        background: transparent;
+    }
+
+    /* --- Tableau sombre corrigé (Sélection et lignes propres) --- */
+    QTableWidget {
+        background-color: #0b1329;
+        border: 1px solid #283548;
+        border-radius: 10px;
+        gridline-color: #1e293b;
+        selection-background-color: #1e3a8a; /* Bleu sombre élégant pour la sélection */
+        selection-color: #ffffff;
+        outline: none;
+    }
+    QHeaderView::section {
+        background-color: #162032;
+        color: #94a3b8;
+        padding: 10px;
+        font-weight: 700;
+        font-size: 11px;
+        border: none;
+        border-bottom: 1px solid #283548;
+    }
+    QTableWidget::item {
+        padding: 8px;
+        color: #cbd5e1;
+        border-bottom: 1px solid #162032;
+    }
+    QTableWidget::item:selected {
+        background-color: #0284c7; /* Surlignage net et moderne de la ligne active */
+        color: #ffffff;
+    }
+
+    /* --- Barres de défilement (Scrollbars) modernes et sombres --- */
+    QScrollBar:vertical {
+        background: #0b1329;
+        width: 10px;
+        margin: 0px;
+        border-radius: 5px;
+    }
+    QScrollBar::handle:vertical {
+        background: #283548;
+        min-height: 20px;
+        border-radius: 5px;
+    }
+    QScrollBar::handle:vertical:hover {
+        background: #38bdf8;
+    }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+        height: 0px;
+    }
+)";
+    setStyleSheet(qss);
 }
 
 MainWindow::~MainWindow()
