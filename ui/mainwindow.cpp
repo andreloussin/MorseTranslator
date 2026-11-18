@@ -30,6 +30,7 @@ void MainWindow::setupUi() {
     resize(1050, 720);
 
     QWidget *centralWidget = new QWidget(this);
+    centralWidget->setObjectName("centralWidget");
     setCentralWidget(centralWidget);
 
     // Premier Layout Vertical, contient le nom de l'app puis un vertical layout pour le conntenu qui aura un max width
@@ -38,6 +39,7 @@ void MainWindow::setupUi() {
 
     // On lui ajoute le titre
     QLabel *appTitle = new QLabel("Morse Translator", this);
+    appTitle->setObjectName("appTitle");
     baseLayout->addWidget(appTitle);
 
     // Pour pouvoir centrer le contenu et mettre un max width, on ba utiliser un HBLay comme les flex-rows dans tailwind
@@ -126,7 +128,7 @@ void MainWindow::setupUi() {
     copyBtn = new QPushButton("Copier");
     copyBtn->setCursor(Qt::PointingHandCursor);
 
-    saveBtn = new QPushButton("Sauvegarder dans l'historique", this);
+    saveBtn = new QPushButton("Sauvegarder", this);
     saveBtn->setObjectName("saveBtn");
     saveBtn->setCursor(Qt::PointingHandCursor);
 
@@ -146,7 +148,8 @@ void MainWindow::setupUi() {
     // On initialise le select du separateur. on le mets a droite car cest la position de depart du morse
     separatorCombo = new QComboBox();
     separatorCombo->setCursor(Qt::PointingHandCursor);
-    for (const MorseSeparator *sep : MorseSeparator::all()) {
+    const QList<const MorseSeparator*> separators = MorseSeparator::all();
+    for (const MorseSeparator *sep : separators) {
         separatorCombo->addItem(sep->label(), QVariant::fromValue(sep));
     }
     rightFooter->insertWidget(0, separatorCombo);
@@ -160,6 +163,7 @@ void MainWindow::setupUi() {
 
     QHBoxLayout *historyHeader = new QHBoxLayout();
     QLabel *historyTitle = new QLabel("Historique des traductions (double-cliquez pour restaurer)", this);
+    historyTitle->setObjectName("sectionTitle");
 
     clearHistoryBtn = new QPushButton("Vider l'historique");
     clearHistoryBtn->setCursor(Qt::PointingHandCursor);
@@ -277,6 +281,7 @@ void MainWindow::onSaveToHistory() {
 
     if (DatabaseManager::instance().addRecord(dir, src, res)) {
         loadHistoryData();
+        onClearInput();
     }
 }
 

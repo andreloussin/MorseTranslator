@@ -2,7 +2,7 @@
 
 const MorseSeparator MorseSeparator::Undefined(
         QStringLiteral("Aucun séparateur"),
-        QStringLiteral("\t"), // Je prefere utiliser l tabulation par defaut
+        QStringLiteral(" / "), // Le slash est defnitivement plus classe
         QStringLiteral("(\\r?\\n+)|([ \\t]{2,}|\\t)|(\\s*/\\s*)|(\\s*\\|\\s*)")
         );
 
