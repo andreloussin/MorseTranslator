@@ -1,0 +1,52 @@
+name: Build Qt Linux 32-bit
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-linux-32bit:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: 1. Checkout du code sur le tag
+        uses: actions/checkout@v4
+
+      - name: 2. Activer l'architecture 32-bit (i386) et installer Qt5 + outils
+        shell: bash
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            g++-multilib \
+            qtbase5-dev:i386 \
+            qt5-qmake:i386 \
+            libqt5sql5-sqlite:i386 \
+            libgl1-mesa-dev:i386 \
+            libxkbcommon-x11-0:i386
+
+      - name: 3. Compiler en mode Release (32-bit)
+        shell: bash
+        run: |
+          mkdir -p build-linux32 && cd build-linux32
+          /usr/lib/i386-linux-gnu/qt5/bin/qmake ../MorseTranslator.pro CONFIG+=release
+          make -j"$(nproc)"
+
+      - name: 4. Vérifier que le binaire est bien en 32-bit (ELF 32-bit LSB)
+        shell: bash
+        run: |
+          file build-linux32/MorseTranslator
+
+      - name: 5. Archiver le binaire en .tar.gz
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          tar -czf "MorseTranslator-${TAG}-linux-i386.tar.gz" -C build-linux32 MorseTranslator
+
+      - name: 6. Publier sur GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: MorseTranslator-${{ github.ref_name }}-linux-i386.tar.gz

@@ -1,0 +1,45 @@
+name: Build Qt Linux 64-bit
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-linux-64bit:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: 1. Checkout du code sur le tag
+        uses: actions/checkout@v4
+
+      - name: 2. Installer Qt5 et les dépendances de compilation
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            qtbase5-dev \
+            qt5-qmake \
+            libqt5sql5-sqlite \
+            libgl1-mesa-dev
+
+      - name: 3. Compiler en mode Release (64-bit)
+        shell: bash
+        run: |
+          mkdir -p build-linux64 && cd build-linux64
+          qmake ../MorseTranslator.pro CONFIG+=release
+          make -j"$(nproc)"
+
+      - name: 4. Archiver le binaire en .tar.gz
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          tar -czf "MorseTranslator-${TAG}-linux-x86_64.tar.gz" -C build-linux64 MorseTranslator
+
+      - name: 5. Publier sur GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: MorseTranslator-${{ github.ref_name }}-linux-x86_64.tar.gz
