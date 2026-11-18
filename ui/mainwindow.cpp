@@ -313,7 +313,6 @@ void MainWindow::applyStyles() {
         font-size: 24px;
         font-weight: 700;
         color: #38bdf8;
-        letter-spacing: 0.5px;
         margin-bottom: 4px;
     }
 
