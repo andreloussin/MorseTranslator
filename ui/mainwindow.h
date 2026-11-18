@@ -7,6 +7,8 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QHBoxLayout>
+#include <QTableWidget>
+
 #include "../core/MorseConverter.h"
 
 class MainWindow : public QMainWindow
@@ -22,11 +24,15 @@ public slots:
     void onSwitchDirection();
     void onCopyResult();
     void onClearInput();
+    void onSaveToHistory();
+    void onClearHistory();
+    void onHistoryItemDoubleClicked(int row, int /*column*/);
 
 private:
     void setupUi();
     void updateDirectionLabels();
     void updateSeparatorComboPosition();
+    void loadHistoryData();
 
     MorseConverter converter;
     TranslationDirection direction = TranslationDirection::FrenchToMorse;
@@ -41,11 +47,15 @@ private:
 
     QPushButton* clearBtn = nullptr;
     QPushButton* copyBtn = nullptr;
+    QPushButton* saveBtn = nullptr;
+    QPushButton* clearHistoryBtn = nullptr;
 
     //
     QHBoxLayout* leftFooter = nullptr;
     QHBoxLayout* rightFooter = nullptr;
     QComboBox* separatorCombo = nullptr;
+
+    QTableWidget* historyTable = nullptr;
 
 private:
     // --- Constantes de l'interface ---

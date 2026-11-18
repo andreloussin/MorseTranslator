@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "core/MorseSeparator.h"
+#include "database/DatabaseManager.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -20,15 +21,14 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUi();
     updateDirectionLabels();
-    updateSeparatorComboPosition();
+    loadHistoryData();
 }
 
 void MainWindow::setupUi() {
-    setWindowTitle("MorseStudio — Traducteur Français ↔ Morse");
+    setWindowTitle("Morse Translator — Traducteur Français ↔ Morse");
     resize(1050, 720);
 
     QWidget *centralWidget = new QWidget(this);
-    centralWidget->setObjectName("centralWidget");
     setCentralWidget(centralWidget);
 
     // Premier Layout Vertical, contient le nom de l'app puis un vertical layout pour le conntenu qui aura un max width
@@ -36,8 +36,7 @@ void MainWindow::setupUi() {
     baseLayout->setContentsMargins(28, 24, 28, 24);
 
     // On lui ajoute le titre
-    QLabel *appTitle = new QLabel("MorseStudio", this);
-    appTitle->setObjectName("appTitle");
+    QLabel *appTitle = new QLabel("Morse Translator", this);
     baseLayout->addWidget(appTitle);
 
     // Pour pouvoir centrer le contenu et mettre un max width, on ba utiliser un HBLay comme les flex-rows dans tailwind
@@ -88,7 +87,7 @@ void MainWindow::setupUi() {
 
     // Carte Gauche (Entrée)
     QFrame *leftCard = new QFrame();
-    leftCard->setMaximumHeight(420);
+    leftCard->setMaximumHeight(210);
     leftCard->setMinimumWidth(240);
     // il a aussi besoin d elayout car il y a des boutons en bas
     QVBoxLayout *leftCardLayout = new QVBoxLayout(leftCard);
@@ -108,7 +107,7 @@ void MainWindow::setupUi() {
 
     // Carte Droite (Résultat)
     QFrame *rightCard = new QFrame();
-    rightCard->setMaximumHeight(420);
+    rightCard->setMaximumHeight(210);
     rightCard->setMinimumWidth(240);
     QVBoxLayout *rightCardLayout = new QVBoxLayout(rightCard);
     rightCardLayout->setContentsMargins(16, 16, 16, 12);
@@ -121,8 +120,12 @@ void MainWindow::setupUi() {
     copyBtn = new QPushButton("Copier");
     copyBtn->setCursor(Qt::PointingHandCursor);
 
+    saveBtn = new QPushButton("Sauvegarder dans l'historique", this);
+    saveBtn->setCursor(Qt::PointingHandCursor);
+
     rightFooter->addStretch();
     rightFooter->addWidget(copyBtn);
+    rightFooter->addWidget(saveBtn);
 
     rightCardLayout->addWidget(resultEdit);
     rightCardLayout->addLayout(rightFooter);
@@ -141,12 +144,46 @@ void MainWindow::setupUi() {
     }
     rightFooter->insertWidget(0, separatorCombo);
 
+    // On initialise la table de l'historique
+    QFrame *historySection = new QFrame();
+    QVBoxLayout *historyLayout = new QVBoxLayout(historySection);
+    historyLayout->setContentsMargins(16, 14, 16, 14);
+    historyLayout->setSpacing(10);
+
+    QHBoxLayout *historyHeader = new QHBoxLayout();
+    QLabel *historyTitle = new QLabel("Historique des traductions (double-cliquez pour restaurer)", this);
+
+    clearHistoryBtn = new QPushButton("Vider l'historique");
+    clearHistoryBtn->setCursor(Qt::PointingHandCursor);
+
+    historyHeader->addWidget(historyTitle);
+    historyHeader->addStretch();
+    historyHeader->addWidget(clearHistoryBtn);
+
+    historyTable = new QTableWidget(0, 4, this);
+    historyTable->setHorizontalHeaderLabels({"Date", "Sens", "Entrée", "Résultat"});
+    historyTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    historyTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    historyTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    historyTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+    historyTable->verticalHeader()->setVisible(false);
+    historyTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    historyTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    historyTable->setAlternatingRowColors(true);
+
+    historyLayout->addLayout(historyHeader);
+    historyLayout->addWidget(historyTable);
+    contentLayout->addWidget(historySection, 2);
+
     // Maintenant on connect tout
     connect(sourceEdit, &QTextEdit::textChanged, this, &MainWindow::onSourceTextChanged);
     connect(switchBtn, &QPushButton::clicked, this, &MainWindow::onSwitchDirection);
     connect(copyBtn, &QPushButton::clicked, this, &MainWindow::onCopyResult);
     connect(clearBtn, &QPushButton::clicked, this, &MainWindow::onClearInput);
     connect(separatorCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onSourceTextChanged);
+    connect(saveBtn, &QPushButton::clicked, this, &MainWindow::onSaveToHistory);
+    connect(clearHistoryBtn, &QPushButton::clicked, this, &MainWindow::onClearHistory);
+    connect(historyTable, &QTableWidget::cellDoubleClicked, this, &MainWindow::onHistoryItemDoubleClicked);
 }
 
 void MainWindow::updateDirectionLabels() {
@@ -159,6 +196,8 @@ void MainWindow::updateDirectionLabels() {
         rightLangLabel->setText("FRANÇAIS");
         sourceEdit->setPlaceholderText(PLACEHOLDER_MORSE);
     }
+
+    updateSeparatorComboPosition();
 }
 
 void MainWindow::updateSeparatorComboPosition() {
@@ -181,7 +220,6 @@ void MainWindow::onSourceTextChanged() {
 void MainWindow::onSwitchDirection() {
     direction = direction == TranslationDirection::FrenchToMorse ? TranslationDirection::MorseToFrench : TranslationDirection::FrenchToMorse;
     updateDirectionLabels();
-    updateSeparatorComboPosition();
 
     // Échange intelligent du contenu actuel
     QString currentResult = resultEdit->toPlainText();
@@ -203,6 +241,49 @@ void MainWindow::onCopyResult() {
 void MainWindow::onClearInput() {
     sourceEdit->clear();
     resultEdit->clear();
+}
+
+// History things
+
+void MainWindow::loadHistoryData() {
+    historyTable->setRowCount(0);
+    const auto records = DatabaseManager::instance().getAllRecords();
+
+    for (const auto &rec : records) {
+        int row =historyTable->rowCount();
+        historyTable->insertRow(row);
+
+        historyTable->setItem(row, 0, new QTableWidgetItem(rec.timestamp));
+        historyTable->setItem(row, 1, new QTableWidgetItem(rec.direction));
+        historyTable->setItem(row, 2, new QTableWidgetItem(rec.sourceText));
+        historyTable->setItem(row, 3, new QTableWidgetItem(rec.resultText));
+    }
+}
+
+void MainWindow::onSaveToHistory() {
+    QString src = sourceEdit->toPlainText().trimmed();
+    QString res = resultEdit->toPlainText().trimmed();
+    if (src.isEmpty() || res.isEmpty()) return;
+
+    QString dir =  MorseConverter::directionToString(direction);
+
+    if (DatabaseManager::instance().addRecord(dir, src, res)) {
+        loadHistoryData();
+    }
+}
+
+void MainWindow::onClearHistory() {
+    if (DatabaseManager::instance().clearHistory()) {
+        loadHistoryData();
+    }
+}
+
+void MainWindow::onHistoryItemDoubleClicked(int row, int /*column*/) {
+    direction = MorseConverter::stringToDirection(historyTable->item(row, 1)->text());
+    QString source = historyTable->item(row, 2)->text();
+
+    updateDirectionLabels();
+    sourceEdit->setPlainText(source);
 }
 
 MainWindow::~MainWindow()

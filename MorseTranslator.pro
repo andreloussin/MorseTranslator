@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -11,12 +11,14 @@ CONFIG += c++11
 SOURCES += \
     core/MorseConverter.cpp \
     core/MorseSeparator.cpp \
+    database/DatabaseManager.cpp \
     main.cpp \
     ui/mainwindow.cpp
 
 HEADERS += \
     core/MorseConverter.h \
     core/MorseSeparator.h \
+    database/DatabaseManager.h \
     ui/mainwindow.h
 
 # Default rules for deployment.
