@@ -1,0 +1,43 @@
+name: Build Windows Exe 32-bit
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: 1. Code checkout
+      uses: actions/checkout@v4
+
+    - name: 2. Installer Qt (version 5.12.12 MinGW 32-bit)
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '5.12.12'
+        arch: 'win32_mingw73'
+        tools: 'tools_cmake'
+
+    - name: 3. Compiler le projet en mode Release
+      shell: cmd
+      run: |
+        qmake MorseTranslator.pro -spec win32-g++
+        mingw32-make release
+
+    - name: 4. Exécuter windeployqt pour récupérer les DLLs
+      shell: cmd
+      run: |
+        C:\Qt\5.12.12\mingw73_32\bin\windeployqt.exe release\MorseTranslator.exe
+
+    - name: 5. Compresser le tout en un ZIP propre
+      shell: powershell
+      run: |
+        Compress-Archive -Path "release\*" -DestinationPath "MorseTranslator-Windows-x86.zip"
+
+    - name: 6. Publier l'artefact sur GitHub
+      uses: actions/upload-artifact@v4
+      with:
+        name: MorseTranslator-Release
+        path: MorseTranslator-Windows-x86.zip
