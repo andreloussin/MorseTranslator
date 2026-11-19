@@ -20,16 +20,19 @@ jobs:
         arch: 'win32_mingw73'
         tools: 'tools_cmake'
 
-    - name: 3. Compiler le projet en mode Release
+    - name: 3. Compiler le projet en mode Release (MinGW 32-bit)
       shell: cmd
       run: |
+        set PATH=D:\a\MorseTranslator\Qt\Tools\mingw730_32\bin;D:\a\MorseTranslator\Qt\5.12.12\mingw73_32\bin;%PATH%
+        where g++
         qmake MorseTranslator.pro -spec win32-g++
         mingw32-make release
 
     - name: 4. Exécuter windeployqt pour récupérer les DLLs
       shell: cmd
       run: |
-        C:\Qt\5.12.12\mingw73_32\bin\windeployqt.exe release\MorseTranslator.exe
+        set PATH=D:\a\MorseTranslator\Qt\Tools\mingw730_32\bin;D:\a\MorseTranslator\Qt\5.12.12\mingw73_32\bin;%PATH%
+        windeployqt.exe --release release\MorseTranslator.exe
 
     - name: 5. Compresser le tout en un ZIP propre
       shell: powershell
