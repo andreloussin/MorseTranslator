@@ -22,6 +22,12 @@ jobs:
           arch: 'win32_mingw73'
           tools: 'mingw730_32,tools_cmake'
 
+      - name: 2b. Vérifier l'installation Qt et MinGW
+        shell: cmd
+        run: |
+          dir D:\a\MorseTranslator\Qt
+          dir /s /b D:\a\MorseTranslator\Qt\g++.exe D:\a\MorseTranslator\Qt\windeployqt.exe 2>nul || echo "Outils non trouvés"
+
       - name: 3. Compiler le projet en mode Release (MinGW 32-bit)
         shell: cmd
         run: |
