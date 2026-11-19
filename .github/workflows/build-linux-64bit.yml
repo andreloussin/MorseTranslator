@@ -15,23 +15,22 @@ jobs:
       - name: 1. Checkout du code sur le tag
         uses: actions/checkout@v4
 
-      - name: 2. Installer Qt5 et les dépendances de compilation
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            build-essential \
-            qtbase5-dev \
-            qt5-qmake \
-            libqt5sql5-sqlite \
-            libgl1-mesa-dev
+      - name: 2. Installer Qt (version 5.12.12 MinGW 32-bit)
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '5.12.12'
+          arch: 'win32_mingw73'
+          tools: 'mingw730_32,tools_cmake'
 
-      - name: 3. Compiler en mode Release (64-bit)
-        shell: bash
+      - name: 3. Compiler le projet en mode Release (MinGW 32-bit)
+        shell: cmd
         run: |
-          mkdir -p build-linux64 && cd build-linux64
-          qmake ../MorseTranslator.pro CONFIG+=release
-          make -j"$(nproc)"
+          echo D:\a\MorseTranslator\Qt\Tools\mingw730_32\bin>>%GITHUB_PATH%
+          echo D:\a\MorseTranslator\Qt\5.12.12\mingw73_32\bin>>%GITHUB_PATH%
+          set PATH=D:\a\MorseTranslator\Qt\Tools\mingw730_32\bin;D:\a\MorseTranslator\Qt\5.12.12\mingw73_32\bin;%PATH%
+          where g++
+          qmake MorseTranslator.pro -spec win32-g++
+          mingw32-make release
 
       - name: 4. Archiver le binaire en .tar.gz
         shell: bash
